@@ -1,0 +1,101 @@
+version: '3'
+
+services:
+
+  kafka-manager:
+    container_name: kafka-manager
+    image: kafkamanager/kafka-manager
+    depends_on:
+      - zookeeper
+    ports:
+      - 9000:9000
+    environment:
+      ZK_HOSTS: zookeeper:2181
+      JMX_PORT: 9999
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper
+    ports:
+      - 2181:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka
+    ports:
+      - 29092:29092
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  connect-ui:
+    container_name: connect-ui
+    image: landoop/kafka-connect-ui
+    restart: always
+    depends_on:
+      - connect
+    ports:
+      - 8000:8000
+    environment:
+      CONNECT_URL: connect:8083
+
+  connect:
+      container_name: connect
+      image: confluentinc/cp-kafka-connect
+      depends_on:
+        - kafka
+        - schema-registry
+      ports:
+        - 8083:8083
+      volumes:
+        - ./connectors:/usr/plugins
+      environment:
+        CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+        CONNECT_GROUP_ID: connect-group
+        CONNECT_CONFIG_STORAGE_TOPIC: connect-config
+        CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+        CONNECT_OFFSET_STORAGE_TOPIC: connect-offset
+        CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+        CONNECT_STATUS_STORAGE_TOPIC: connect-status
+        CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+        CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+        CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+        CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+        CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+        CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+        CONNECT_REST_ADVERTISED_HOST_NAME: connect
+        CONNECT_PLUGIN_PATH: /usr/plugins
+
+  schema-registry-ui:
+    container_name: schema-registry-ui
+    image: landoop/schema-registry-ui
+    restart: always
+    depends_on:
+      - schema-registry
+    ports:
+      - 8001:8001
+    environment:
+      SCHEMAREGISTRY_URL: http://schema-registry:8081
+      PROXY: "true"
+      PORT: 8001
+
+  schema-registry:
+    container_name: schema-registry
+    image: confluentinc/cp-schema-registry
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:29092
