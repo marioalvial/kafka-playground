@@ -34,7 +34,7 @@ abstract class KafkaAbstractStream<I : SpecificRecord, O : SpecificRecord> {
             it[AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG] = schemaRegistryUrl
             it[StreamsConfig.PROCESSING_GUARANTEE_CONFIG] = StreamsConfig.EXACTLY_ONCE
             it[StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG] =
-                LoyaltyDeserializationExceptionHandler::class.java.name
+                ApplicationDeserializationExceptionHandler::class.java.name
         }
     }
 

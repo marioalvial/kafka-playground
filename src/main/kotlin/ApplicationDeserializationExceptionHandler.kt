@@ -8,7 +8,7 @@ import org.apache.kafka.streams.errors.DeserializationExceptionHandler
 import org.apache.kafka.streams.processor.ProcessorContext
 import java.util.*
 
-abstract class LoyaltyDeserializationExceptionHandler(
+abstract class ApplicationDeserializationExceptionHandler(
     private val bootstrapServers: String,
     private val deadLetterTopic: String,
     private val applicationName: String,
