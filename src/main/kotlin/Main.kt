@@ -18,8 +18,7 @@ fun main() {
     consumer.subscribe(listOf("twitter-connector-status"))
     while (true){
     val records = consumer.poll(Duration.ZERO)
-        records.forEach {
-            println("KEY ${it.key()} - VALUE ${it.value().substringAfter("\"payload\":")}")
+        records.forEach { println("KEY ${it.key()} - VALUE ${it.value().substringAfter("\"payload\":")}")
         }
     }
 }
